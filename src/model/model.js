@@ -6,5 +6,5 @@ const InsertSchema = mongoose.Schema({
     email:{type:String,require:[true,"Email Missing"]},
     password:{type:String,require:[true,'Password Missing']}
 })
-const InserModule = new mongoose.model(Collection.Collection,InsertSchema);
+const InserModule = new mongoose.model(Collection.insert,InsertSchema);
 module.exports = InserModule;
