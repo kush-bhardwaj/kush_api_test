@@ -1,12 +1,58 @@
 const EmployeModel = require('../model/EmpModel')
 const { ObjectId } = require('mongodb')
+const InserModel = require('../model/model')
+const Collections = require('../db/Collection')
+
+//get all employee
+exports.getAllEmp = async (req, res, next) => {
+    try {
+        //user id
+        const { user_id } = req
+
+        //flags for if user_id is not
+        if (!user_id || user_id.length == 0 || user_id == "" || user_id == null) {
+            return res.status(200).json({
+                success: 'true',
+                message: 'you are not user'
+            })
+        }
+        //check user exist by user_id
+        const checkUser = await InserModel.findOne({ _id: user_id })
+
+        //if user exist who's fetching all data then got all data
+        if (checkUser) {
+            const allEmp = await EmployeModel.find({})
+            allEmp ? res.status(200).json({
+                success: 'true',
+                data: allEmp
+            }) : res.status(200).json({
+                success: 'false',
+                message: 'failed to fetch data'
+            })
+        }
+
+    } catch (err) {
+        res.json({
+            success: 'false',
+            message: "something went wrong"
+        })
+    }
+}
 exports.CreateEmployee = async (req, res, next) => {
     try {
         const EmmplyeDetails = {
             empName: req.body.name,
             empEmail: req.body.email,
             empAddress: req.body.address,
-            empPhone: req.body.phone
+            empPhone: req.body.phone,
+            userId: req.user_id
+        }
+        if (Object.values(EmmplyeDetails) == '' || Object.values(EmmplyeDetails).length == 0 || !Object.values(EmmplyeDetails) ||
+            Object.values(EmmplyeDetails) == null) {
+            return res.status(200).json({
+                success: 'false',
+                message: 'missing details of employee'
+            })
         }
         const InsertEmp = await EmployeModel.create(EmmplyeDetails)
         if (InsertEmp) {
@@ -50,7 +96,7 @@ exports.SingleEmployee = async (req, res, next) => {
     }
     catch (err) {
         res.json({
-            success: 'failed',
+            success: 'false',
             message: "something went to wrong ",
             error: err
         })
@@ -72,13 +118,12 @@ exports.UpdateEmployee = async (req, res, next) => {
                 success: 'false',
                 message: "Invalid id provided"
             })
-
         }
         const UpdateEmp = await EmployeModel.updateOne({ _id: id }, { $set: EmmplyeDetails })
         UpdateEmp ? res.status(200).json({
             success: 'true',
             message: "employe Update ",
-            data:UpdateEmp
+            data: UpdateEmp
         }) : res.json(
             {
                 success: 'false',
@@ -86,7 +131,7 @@ exports.UpdateEmployee = async (req, res, next) => {
             })
     } catch (err) {
         res.json({
-            success: 'failed',
+            success: 'false',
             message: 'something went wrong',
             error: err
         })
@@ -101,7 +146,7 @@ exports.DeleteEmployee = async (req, res, next) => {
         // if(!id || id=='undefine' || id=="" || id==null){
 
         // }
-        if (id.length === 0 || id !== 'undefined' || id !== '' || id !== isNaN) {
+        if (!id.length == 0 || id !== 'undefined' || id !== '' || id !== isNaN) {
             const UpdateEmp = await EmployeModel.deleteOne({ _id: new ObjectId(id) })
 
             UpdateEmp ? res.status(200).json({
@@ -114,7 +159,7 @@ exports.DeleteEmployee = async (req, res, next) => {
         }
         else {
             res.json({
-                success: 'failed',
+                success: 'false',
                 message: 'failed to delete employe'
             })
         }
@@ -122,7 +167,7 @@ exports.DeleteEmployee = async (req, res, next) => {
     catch (err) {
         console.log(err)
         res.json({
-            success: 'failed',
+            success: 'false',
             message: 'something went wrong',
             error: err
         })
@@ -142,16 +187,68 @@ exports.SearchEmployee = async (req, res, next) => {
             ]
         }
         const resData = await EmployeModel.find(SearchData)
-        resData ? res.status(200).json({
-            success: 'true',
-            message: 'data fetched',
-            data: resData
-        }) : res.json({
-            success: 'false',
-            message: 'failed to fecth'
-        })
+        if (!resData || resData.length ==  0 || resData === "" || resData == null) {
+            console.log("hello")
+            return res.status(200).json({
+                success: 'false',
+                message: 'employee not found',
+            })
+        } else {
+            res.status(200).json({
+                success: 'true',
+                message: "employe fetch",
+                data: resData
+            })
+        }
     }
     catch (err) {
-
+        res.status(200).json({
+            success: 'false',
+            message: "sometning went wrong"
+        })
     }
+}
+
+//get employee by user id
+exports.GetEmployeByUser = async (req, res, next) => {
+   try{
+    const { user_id } = req;
+    const FetchEmp = await EmployeModel.aggregate([ 
+        { $match: { userId: new ObjectId(user_id) } },
+        {
+            $lookup: {
+                from:'users',
+                localField:"userId", 
+                foreignField:"_id", 
+                as:"data"
+            }
+            
+        },
+        {
+            $unwind:'$data'
+        },
+        {
+            $project:{
+                'data.password':0
+            }
+        }
+    ])
+    
+    if(FetchEmp){
+        res.status(200).json({
+            success:'true',
+            data:FetchEmp
+        })
+    }else{
+        res.status(200).json({
+            success:'false',
+            message:'failed to fetch data'
+        })
+    }
+   }catch(err){
+    res.json({
+        success:'false',
+        message:'something went wrong'
+    })
+   }
 }
