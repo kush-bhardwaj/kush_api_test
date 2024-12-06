@@ -1,6 +1,7 @@
 const InsertModel = require('../model/model');
 const jwt = require('jsonwebtoken')
 const { genPassword, comparePass } = require('../utils/EncryptPass');
+const EmployeModel = require('../model/EmpModel');
 exports.SignUpUser = async (req, res) => {
     const data = {
         name: req.body.name,
@@ -42,7 +43,10 @@ exports.LoginUser = async (req, res, next) => {
                     message: 'login successfull',
                     token: jsonToken
                 })
-            }
+            }else{res.json({
+                success:'false',
+                message:'incorrect password or email'
+            })}
         } else {
             res.status(203).json({
                 success: 'false',
@@ -56,4 +60,33 @@ exports.LoginUser = async (req, res, next) => {
             message: 'something went wrong'
         })
     }
+}
+
+//get employee data by user's
+exports.getByUser = async (req, res) => {
+   try{
+     //user id 
+     const { user_id } = req;
+     //check user exist || not
+
+     const checkUser = await InsertModel.findOne({_id:user_id})
+     if(checkUser){
+        const getEmp = await EmployeModel.find({userId:user_id})
+        res.status(200).json({
+            success:'true',
+            data:getEmp
+        })
+     }else{
+         res.status(200).json({
+            success:'false',
+            message:'unable to find please try again later'
+         })
+     }
+   }catch(err){
+    res.json({
+        success:'false',
+        message:'something went wrong try again later'
+    })
+   }
+
 }
