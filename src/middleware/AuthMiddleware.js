@@ -3,9 +3,10 @@ exports.AuthMiddlware = async(req, res,next)=>{
    try{
     const scretKey = process.env.SECRET_KEY
     const Token = req.headers['authorization'].split(" ")[1]
-    const Auth =  jwt.verify(Token,scretKey)
+    // console.log("token",Token)
+    const Auth = jwt.verify(Token,scretKey)
     if(Auth) {
-        req.user_id = Auth.user_id 
+        req.user = Auth
         next()
     }else{
         res.status(203).json({

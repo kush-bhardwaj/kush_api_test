@@ -1,5 +1,7 @@
-const Collections ={
-    insert:'user',
-    employee:'emplooyee'
+const Collection ={
+    Admin:'admin',
+    Manager:'magager',
+    User:"user",
+    task:'task'
 }
-module.exports = Collections
+module.exports = Collection;
